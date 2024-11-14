@@ -5,7 +5,7 @@ import 'package:scholar_mate/features/notes/presentation/Pages/update_note.dart'
 class NoteDetailPage extends StatelessWidget {
   final Note note;
 
-  const NoteDetailPage({Key? key, required this.note}) : super(key: key);
+  const NoteDetailPage({super.key, required this.note});
 
   @override
   Widget build(BuildContext context) {

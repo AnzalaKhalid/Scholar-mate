@@ -1,5 +1,3 @@
-// lib/features/library/presentation/pages/library_screen.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -7,7 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:scholar_mate/features/library/domain/services.dart';
-import 'package:scholar_mate/features/library/presentation/pages/view_books.dart'; // Adjust as necessary
+import 'package:scholar_mate/features/library/presentation/pages/view_books.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -18,7 +16,6 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   File? file;
-  List<Map<String, dynamic>> uploadedFiles = [];
   bool isLoading = false;
   final BookService _bookService = BookService();
 
@@ -32,7 +29,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     setState(() {
       isLoading = true;
     });
-    uploadedFiles = await _bookService.fetchUploadedFiles();
+    await _bookService.fetchUploadedFiles();
     setState(() {
       isLoading = false;
     });
@@ -54,8 +51,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> uploadFile(String customFileName) async {
     if (file == null || customFileName.isEmpty) return;
-    await _bookService.uploadFile(file!, customFileName);
-    fetchUploadedFiles();
+    await _bookService.uploadFile(file!, customFileName, customFileName);
+    fetchUploadedFiles(); // Refresh the list after upload
   }
 
   Future<void> showNameInputDialog() async {
@@ -113,7 +110,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PDFViewPage(filePath: filePath, pdfName: pdfName),
+            builder: (context) =>
+                PDFViewPage(filePath: filePath, pdfName: pdfName),
           ),
         );
       } else {
@@ -133,83 +131,150 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> deletePDF(String docId, String fileUrl) async {
     await _bookService.deletePDF(docId, fileUrl);
-    fetchUploadedFiles();
+    fetchUploadedFiles(); // Refresh the list after deletion
   }
 
   @override
   Widget build(BuildContext context) {
+    // Fetch uploaded files from the global list
+    List<Map<String, dynamic>> uploadedFiles = _bookService.fetchedBooks;
+
+    // Use MediaQuery for responsive spacing and sizing
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 219, 218, 218),
+      backgroundColor: const Color(0xFFF5F5F5),
       body: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.04,
+              vertical: screenHeight * 0.03,
+            ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Uploaded Books:",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Padding(
+                  padding: const EdgeInsets.only(left: 75),
+                  child: Row(
+                    children: [
+                      Text(
+                        "Library ",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.07,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                     const Text(
+                        ' (PDFs only)',
+                        style: TextStyle(
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Text("PDF only"),
+                const Divider(
+                  color: Color.fromARGB(255, 1, 97, 205),
+                ),
+                SizedBox(height: screenHeight * 0.01),
                 Expanded(
-                  child: ListView.builder(
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: screenWidth > 600
+                          ? 3
+                          : 2, // Adjusts for larger screens
+                      childAspectRatio: screenWidth > 600 ? 0.7 : 0.75,
+                      mainAxisSpacing: 15,
+                      crossAxisSpacing: 15,
+                    ),
                     itemCount: uploadedFiles.length,
                     itemBuilder: (context, index) {
-                      return Card(
-                        color: const Color(0xFF457b9d), 
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: ListTile(
-                          leading: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.picture_as_pdf,
-                              color: Colors.white,
-                            ),
+                      return GestureDetector(
+                        onTap: () => openPDF(uploadedFiles[index]['url'],
+                            uploadedFiles[index]['name']),
+                        child: Card(
+                          color: const Color.fromARGB(255, 5, 120, 251),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          title: Text(
-                            uploadedFiles[index]['name'],
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                          ),
-                          subtitle: const Text(
-                            "Tap to view",
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                          onTap: () => openPDF(uploadedFiles[index]['url'], uploadedFiles[index]['name']),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.black),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text("Delete PDF"),
-                                  content: const Text("Are you sure you want to delete this PDF?"),
-                                  actions: [
-                                    TextButton(
-                                      child: const Text("Cancel"),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
+                          elevation: 5,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                                top: screenWidth * 0.02,
+                                left: screenHeight * 0.01,
+                                right: screenHeight * 0.01),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  height: screenHeight * 0.2,
+                                  decoration: BoxDecoration(
+                                    color:
+                                        const Color.fromARGB(255, 1, 97, 205),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.picture_as_pdf,
+                                    color: Colors.white,
+                                    size: 70,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        uploadedFiles[index]['name'],
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: screenWidth * 0.04,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                    TextButton(
-                                      child: const Text("Delete"),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.white),
                                       onPressed: () {
-                                        Navigator.of(context).pop();
-                                        deletePDF(uploadedFiles[index]['id'], uploadedFiles[index]['url']);
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text("Delete PDF"),
+                                            content: const Text(
+                                                "Are you sure you want to delete this PDF?"),
+                                            actions: [
+                                              TextButton(
+                                                child: const Text("Cancel"),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: const Text("Delete"),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                  deletePDF(
+                                                      uploadedFiles[index]
+                                                          ['id'],
+                                                      uploadedFiles[index]
+                                                          ['url']);
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        );
                                       },
                                     ),
                                   ],
                                 ),
-                              );
-                            },
+                                const Spacer(),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -231,7 +296,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: pickFile,
         tooltip: 'Upload PDF',
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color.fromARGB(255, 1, 97, 205),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

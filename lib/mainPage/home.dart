@@ -16,41 +16,41 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _name = '';
   String _idNumber = '';
+  String _profileImageUrl = '';
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
   }
-Future<void> _fetchUserData() async {
-  try {
-    User? user = FirebaseAuth.instance.currentUser;
 
-    if (user != null) {
-      // Get the document for the current user
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+  Future<void> _fetchUserData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
 
-      // Cast the document data to a Map
-      Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-      // Safely access the fields and update state with the user data
-      if (userData != null) {
-        setState(() {
-          _name = userData['name'] ?? 'No name';  // Fallback if 'name' is not found
-          _idNumber = userData['idNumber'] ?? 'No ID';  // Fallback if 'idNumber' is not found
-        });
-      } else {
-        print('User document does not contain data');
+        Map<String, dynamic>? userData =
+            userDoc.data() as Map<String, dynamic>?;
+
+        if (userData != null) {
+          setState(() {
+            _name = userData['name'] ?? 'No name';
+            _idNumber = userData['idNumber'] ?? 'No ID';
+            _profileImageUrl = userData['profileImageUrl'] ?? '';
+          });
+        } else {
+          print('User document does not contain data');
+        }
       }
+    } catch (e) {
+      print('Error fetching user data: $e');
     }
-  } catch (e) {
-    print('Error fetching user data: $e');
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -64,18 +64,23 @@ Future<void> _fetchUserData() async {
             // User Info Row
             Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.blueAccent,
-                  child: Icon(
-                    Icons.person,
-                    size: 20,
-                    color: Colors.white,
-                  ),
+                  backgroundImage: _profileImageUrl.isNotEmpty
+                      ? NetworkImage(_profileImageUrl)
+                      : null,
+                  child: _profileImageUrl.isEmpty
+                      ? const Icon(
+                          Icons.person,
+                          size: 20,
+                          color: Colors.white,
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  _name.isNotEmpty ? _name : 'Loading...',  // Show loading if name not yet fetched
+                  _name.isNotEmpty ? _name : 'Loading...',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -84,7 +89,7 @@ Future<void> _fetchUserData() async {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  _idNumber.isNotEmpty ? _idNumber : 'Loading...',  // Show loading if ID not yet fetched
+                  _idNumber.isNotEmpty ? _idNumber : 'Loading...',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.normal,
@@ -93,23 +98,25 @@ Future<void> _fetchUserData() async {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-
-            // Search Bar
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Search courses, notes...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+            const SizedBox(height: 10),
+            const Divider(
+              color: Color.fromARGB(255, 1, 97, 205),
             ),
-            const SizedBox(height: 20),
+            // Search Bar
+            // TextField(
+            //   decoration: InputDecoration(
+            //     hintText: 'Search courses, notes...',
+            //     prefixIcon: const Icon(Icons.search),
+            //     filled: true,
+            //     fillColor: Colors.white,
+            //     contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+            //     border: OutlineInputBorder(
+            //       borderRadius: BorderRadius.circular(12.0),
+            //       borderSide: BorderSide.none,
+            //     ),
+            //   ),
+            // ),
+            const SizedBox(height: 10),
 
             // Quick Access Cards
             Expanded(
@@ -118,10 +125,14 @@ Future<void> _fetchUserData() async {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: [
-                  _buildCard('Class Rooms', Icons.class_, const Color(0xFF3A5A9F), const ClassroomScreen()),
-                  _buildCard('Assignment', Icons.assignment, const Color(0xFF4CA1A3), const AssignmentScreen()),
-                  _buildCard('Notes', Icons.note, const Color(0xFF8EA58A), const NotesListPage(userId: 'currentUserId')),
-                  _buildCard('Task', Icons.task, const Color(0xFF6E7B8B), const TaskScreen()),
+                  _buildCard('Class Rooms', Icons.class_,
+                      const Color(0xFF3A5A9F), const ClassroomScreen()),
+                  _buildCard('Assignment', Icons.assignment,
+                      const Color(0xFF4CA1A3), const AssignmentScreen()),
+                  _buildCard('Notes', Icons.note, const Color(0xFF8EA58A),
+                      const NotesListPage(userId: 'currentUserId')),
+                  _buildCard('Task', Icons.task, const Color(0xFF6E7B8B),
+                      const TaskScreen()),
                 ],
               ),
             ),
