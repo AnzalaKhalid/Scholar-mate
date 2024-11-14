@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:scholar_mate/features/notes/data/models/note_model.dart';
 import 'package:scholar_mate/features/notes/domain/services.dart';
 
 class NoteUpdatePage extends StatefulWidget {
   final Note note;
 
-  const NoteUpdatePage({Key? key, required this.note}) : super(key: key);
+  const NoteUpdatePage({super.key, required this.note});
 
   @override
   _NoteUpdatePageState createState() => _NoteUpdatePageState();
@@ -25,12 +26,22 @@ class _NoteUpdatePageState extends State<NoteUpdatePage> {
   }
 
   void _updateNote() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid; // Get the current user's ID
+
+    if (userId == null) {
+      // Handle case where user is not logged in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in. Unable to update note.')),
+      );
+      return;
+    }
+
     // Create an updated note object
     Note updatedNote = Note(
       id: widget.note.id, // Existing note ID for updating
       title: _titleController.text,
       content: _contentController.text,
-      userId: widget.note.userId, // Retain the user ID
+      userId: userId, // Use the retrieved user ID
     );
 
     // Call the update method in the notes service

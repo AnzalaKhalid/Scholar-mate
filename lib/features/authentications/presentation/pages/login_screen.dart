@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:scholar_mate/features/authentications/presentation/pages/otp_page.dart';
 import 'package:scholar_mate/features/authentications/presentation/pages/signup.dart';
 import 'package:scholar_mate/mainPage/navigation.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -25,18 +28,36 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // Sign in method
-  void _signIn() async {
+    void _signIn() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
       try {
-        await _auth.signInWithEmailAndPassword(
+        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: _email,
           password: _password,
         );
-        // Navigate to home screen after successful login
-        Navigator.push(context, MaterialPageRoute(builder: (context)=>Navigation()));
+        User? user = userCredential.user;
+
+        if (user != null) {
+          await user.reload();
+          user = _auth.currentUser;
+
+          if (user!.emailVerified) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Navigation()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OtpVerificationScreen(email: _email, fromLoginPage: true,),
+              ),
+            );
+          }
+        }
       } catch (e) {
         setState(() {
           _errorMessage = e.toString();
@@ -93,7 +114,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Welcome Back!',
                             style: TextStyle(
                               fontSize: 24,
@@ -105,9 +126,9 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             decoration: InputDecoration(
                               hintText: 'University Email',
-                              prefixIcon: Icon(
+                              prefixIcon: const Icon(
                                 Icons.email,
-                                color: const Color.fromARGB(255, 129, 1, 152),
+                                color: Color.fromARGB(255, 129, 1, 152),
                               ),
                               filled: true,
                               fillColor: Colors.grey[100],
@@ -116,8 +137,8 @@ class _LoginPageState extends State<LoginPage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: const Color(0xFF027FE6),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF027FE6),
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -139,9 +160,9 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             decoration: InputDecoration(
                               hintText: 'Password',
-                              prefixIcon: Icon(
+                              prefixIcon: const Icon(
                                 Icons.lock,
-                                color: const Color.fromARGB(255, 129, 1, 152),
+                                color: Color.fromARGB(255, 129, 1, 152),
                               ),
                               filled: true,
                               fillColor: Colors.grey[100],
@@ -161,8 +182,8 @@ class _LoginPageState extends State<LoginPage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: const Color(0xFF027FE6),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF027FE6),
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -184,7 +205,7 @@ class _LoginPageState extends State<LoginPage> {
                             children: [
                               TextButton(
                                 onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => SignUpPage()));
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage()));
                                 },
                                 child: const Text(
                                   "Don't have an account?",
@@ -218,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     backgroundColor: const Color(0xFF015DA9),
                                   ),
-                                  child: Text(
+                                  child: const Text(
                                     'Login',
                                     style: TextStyle(
                                       color: Colors.white,

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:scholar_mate/features/notes/data/models/note_model.dart';
 import 'package:scholar_mate/features/notes/domain/services.dart';
 
 class CreateNotePage extends StatefulWidget {
-  final String userId; // Pass the user ID to associate notes with the user
-
-  const CreateNotePage({Key? key, required this.userId}) : super(key: key);
+  const CreateNotePage({super.key, required String userId});
 
   @override
   _CreateNotePageState createState() => _CreateNotePageState();
@@ -17,12 +16,21 @@ class _CreateNotePageState extends State<CreateNotePage> {
   final NotesService _notesService = NotesService();
 
   void _createNote() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid; // Retrieve the logged-in user's ID
+    if (userId == null) {
+      // Handle case where user is not logged in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not logged in. Unable to create note.')),
+      );
+      return;
+    }
+
     Note note = Note(
       title: _titleController.text,
       content: _contentController.text,
-      userId: widget.userId,
+      userId: userId, // Use the retrieved user ID
     );
-    
+
     await _notesService.createNote(note);
     Navigator.pop(context, true); // Return to previous page
   }

@@ -54,12 +54,12 @@ class _NavigationState extends State<Navigation> with SingleTickerProviderStateM
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
-        children:  const <Widget>[
-          ChatScreen(),
-           AiScreen(),
-          HomePage(),
-          LibraryScreen(),
-          ProfileScreen(),
+        children:   <Widget>[
+          ChatPage(),
+          const AiScreen(),
+         const HomePage(),
+          const LibraryScreen(),
+          const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: Container(

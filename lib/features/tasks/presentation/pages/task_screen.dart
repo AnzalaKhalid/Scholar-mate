@@ -12,7 +12,7 @@ class TaskScreen extends StatefulWidget {
 }
 
 class _TaskScreenState extends State<TaskScreen> {
-  final TaskfetchService _taskService = TaskfetchService();
+  final TaskFetchService _taskService = TaskFetchService();
   final List<Map<String, dynamic>> tasks = [];
   List<Map<String, dynamic>> filteredTasks = [];
   final TextEditingController _searchController = TextEditingController();

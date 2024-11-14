@@ -7,13 +7,23 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 
 class BookService {
+  static final BookService _instance = BookService._internal();
+  factory BookService() => _instance;
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  Future<List<Map<String, dynamic>>> fetchUploadedFiles() async {
+  // This will hold the globally accessible list of books
+  List<Map<String, dynamic>> _fetchedBooks = [];
+
+  BookService._internal();
+
+  List<Map<String, dynamic>> get fetchedBooks => _fetchedBooks;
+
+  Future<void> fetchUploadedFiles() async {
     try {
       var collection = await _firestore.collection('books').get();
-      return collection.docs.map((doc) {
+      _fetchedBooks = collection.docs.map((doc) {
         var data = doc.data();
         return {
           'id': doc.id,
@@ -27,11 +37,11 @@ class BookService {
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
-      return []; // Return an empty list on error
+      _fetchedBooks = []; // Return an empty list on error
     }
   }
 
-  Future<void> uploadFile(File file, String customFileName) async {
+  Future<void> uploadFile(File file, String customFileName, String currentUserId) async {
     if (customFileName.isEmpty) return;
 
     try {
@@ -45,6 +55,9 @@ class BookService {
         'url': downloadUrl,
       });
 
+      // Fetch updated files after upload
+      await fetchUploadedFiles();
+
       Fluttertoast.showToast(msg: "Uploaded successfully", backgroundColor: Colors.blue, textColor: Colors.white);
     } catch (e) {
       Fluttertoast.showToast(msg: "Upload failed: $e", backgroundColor: Colors.red, textColor: Colors.white);
@@ -56,6 +69,9 @@ class BookService {
       await _firestore.collection('books').doc(docId).delete();
       var storageRef = _storage.refFromURL(fileUrl);
       await storageRef.delete();
+
+      // Fetch updated files after deletion
+      await fetchUploadedFiles();
 
       Fluttertoast.showToast(
         msg: "Deleted successfully",

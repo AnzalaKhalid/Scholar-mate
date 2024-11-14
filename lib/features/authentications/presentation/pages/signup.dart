@@ -5,6 +5,8 @@ import 'package:scholar_mate/features/authentications/presentation/pages/login_s
 import 'package:scholar_mate/features/authentications/presentation/pages/otp_page.dart';
 
 class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
@@ -27,46 +29,33 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // List of departments
+
   final List<String> _departments = [
-    'Education',
-    'IBLC',
-    'Computer Science',
-    'Political Science',
-    'Botany',
-    'Biotechnology',
-    'Biochemistry',
-    'Chemistry',
-    'English Literature',
-    'BBA',
-    'Commerce',
-    'Economics',
-    'Sociology',
+    'Education', 'IBLC', 'Computer Science', 'Political Science',
+    'Botany', 'Biotechnology', 'Biochemistry', 'Chemistry', 
+    'English Literature', 'BBA', 'Commerce', 'Economics', 'Sociology',
   ];
 
-  // Email validation
+
   bool _validateEmail(String email) {
     final String domain = email.split('@').last;
     return domain == 'stud.uot.edu.pk';
   }
 
-  // Sign up logic
+
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() { _isLoading = true; });
 
       try {
         UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
           email: _email,
           password: _password,
         );
+        String userId = userCredential.user!.uid;
 
-        await _sendVerificationEmail();
-
-        // Store additional user data in Firestore
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        // Save user information to Firestore
+        await _firestore.collection('users').doc(userId).set({
           'name': _name,
           'fatherName': _fatherName,
           'department': _selectedDepartment,
@@ -74,32 +63,22 @@ class _SignUpPageState extends State<SignUpPage> {
           'semester': _semester,
           'email': _email,
           'isVerified': false,
+          'userId': userId,
         });
 
-        // Navigate to OTP verification screen
+        // Navigate to SendVerificationEmailPage
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => OtpVerificationScreen(email: _email)),
+          MaterialPageRoute(builder: (context) => OtpVerificationScreen(email: _email, fromLoginPage: false,)),
         );
       } catch (e) {
-        setState(() {
-          _errorMessage = e.toString();
-        });
+        setState(() { _errorMessage = e.toString(); });
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() { _isLoading = false; });
       }
     }
   }
-
-  // Send verification email
-  Future<void> _sendVerificationEmail() async {
-    User? user = _auth.currentUser;
-    await user?.sendEmailVerification();
-  }
-
-  // Build the form
+  
   Widget _buildTextFormField({
     required String hintText,
     required IconData prefixIcon,
@@ -119,7 +98,7 @@ class _SignUpPageState extends State<SignUpPage> {
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: const Color(0xFF027FE6)),
+          borderSide: const BorderSide(color: Color(0xFF027FE6)),
           borderRadius: BorderRadius.circular(12),
         ),
         suffixIcon: suffixIcon,
@@ -127,6 +106,25 @@ class _SignUpPageState extends State<SignUpPage> {
       obscureText: obscureText,
       onChanged: onChanged,
       validator: validator,
+    );
+  }
+  
+    Widget _buildCard(List<Widget> children) {
+    return SizedBox(
+      width: 350,
+      child: Card(
+        color: Colors.white,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ),
     );
   }
 
@@ -174,7 +172,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Create Your Account',
                             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
                           ),
@@ -184,12 +182,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             prefixIcon: Icons.email,
                             onChanged: (value) => _email = value,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter an email';
-                              }
-                              if (!_validateEmail(value)) {
-                                return 'Please use your university email';
-                              }
+                              if (value == null || value.isEmpty) return 'Please enter an email';
+                              if (!_validateEmail(value)) return 'Please use your university email';
                               return null;
                             },
                           ),
@@ -199,22 +193,14 @@ class _SignUpPageState extends State<SignUpPage> {
                             prefixIcon: Icons.lock,
                             onChanged: (value) => _password = value,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a password';
-                              }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
+                              if (value == null || value.isEmpty) return 'Please enter a password';
+                              if (value.length < 6) return 'Password must be at least 6 characters';
                               return null;
                             },
                             obscureText: !_isPasswordVisible,
                             suffixIcon: IconButton(
                               icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                              onPressed: () {
-                                setState(() {
-                                  _isPasswordVisible = !_isPasswordVisible;
-                                });
-                              },
+                              onPressed: () { setState(() { _isPasswordVisible = !_isPasswordVisible; }); },
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -223,29 +209,21 @@ class _SignUpPageState extends State<SignUpPage> {
                             prefixIcon: Icons.lock_outline,
                             onChanged: (value) => _confirmPassword = value,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please confirm your password';
-                              }
-                              if (value != _password) {
-                                return 'Passwords do not match';
-                              }
+                              if (value == null || value.isEmpty) return 'Please confirm your password';
+                              if (value != _password) return 'Passwords do not match';
                               return null;
                             },
                             obscureText: !_isConfirmPasswordVisible,
                             suffixIcon: IconButton(
                               icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                              onPressed: () {
-                                setState(() {
-                                  _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                                });
-                              },
+                              onPressed: () { setState(() { _isConfirmPasswordVisible = !_isConfirmPasswordVisible; }); },
                             ),
                           ),
                           const SizedBox(height: 15),
                           DropdownButtonFormField<String>(
                             decoration: InputDecoration(
                               hintText: 'Select Department',
-                              prefixIcon: Icon(Icons.school, color: const Color.fromARGB(255, 129, 1, 152)),
+                              prefixIcon: const Icon(Icons.school, color: Color.fromARGB(255, 129, 1, 152)),
                               filled: true,
                               fillColor: Colors.grey[100],
                               enabledBorder: OutlineInputBorder(
@@ -253,16 +231,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: const Color(0xFF027FE6)),
+                                borderSide: const BorderSide(color: Color(0xFF027FE6)),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             value: _selectedDepartment,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedDepartment = value;
-                              });
-                            },
+                            onChanged: (value) { setState(() { _selectedDepartment = value; }); },
                             items: _departments.map((String department) {
                               return DropdownMenuItem<String>(
                                 value: department,
@@ -270,9 +244,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               );
                             }).toList(),
                             validator: (value) {
-                              if (value == null) {
-                                return 'Please select a department';
-                              }
+                              if (value == null) return 'Please select a department';
                               return null;
                             },
                           ),
@@ -282,9 +254,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             prefixIcon: Icons.person,
                             onChanged: (value) => _name = value,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your name';
-                              }
+                              if (value == null || value.isEmpty) return 'Please enter your name';
                               return null;
                             },
                           ),
@@ -294,9 +264,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             prefixIcon: Icons.person,
                             onChanged: (value) => _fatherName = value,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your father\'s name';
-                              }
+                              if (value == null || value.isEmpty) return 'Please enter your father\'s name';
                               return null;
                             },
                           ),
@@ -306,21 +274,17 @@ class _SignUpPageState extends State<SignUpPage> {
                             prefixIcon: Icons.person,
                             onChanged: (value) => _idNumber = value,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your ID number';
-                              }
+                              if (value == null || value.isEmpty) return 'Please enter your ID number';
                               return null;
                             },
                           ),
                           const SizedBox(height: 15),
                           _buildTextFormField(
                             hintText: 'Semester',
-                            prefixIcon: Icons.calendar_today,
+                            prefixIcon: Icons.school,
                             onChanged: (value) => _semester = value,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your semester';
-                              }
+                              if (value == null || value.isEmpty) return 'Please enter your semester';
                               return null;
                             },
                           ),
@@ -328,36 +292,38 @@ class _SignUpPageState extends State<SignUpPage> {
                           if (_errorMessage.isNotEmpty)
                             Text(
                               _errorMessage,
-                              style: TextStyle(color: Colors.red),
+                              style: const TextStyle(color: Colors.red),
                             ),
-                          const SizedBox(height: 10),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _signUp,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF027FE6),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _signUp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF027FE6),
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: _isLoading
-                                  ? CircularProgressIndicator(color: Colors.white)
-                                  : Text('Sign Up'),
                             ),
+                            child: _isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text(
+                                    'Sign Up',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text('Already have an account?'),
+                              const Text("Already have an account?", style: TextStyle(fontSize: 15)),
                               TextButton(
                                 onPressed: () {
                                   Navigator.pushReplacement(
                                     context,
-                                    MaterialPageRoute(builder: (context) => LoginPage()),
+                                    MaterialPageRoute(builder: (context) => const LoginPage()),
                                   );
                                 },
-                                child: const Text('Login'),
+                                child: const Text("Sign In", style: TextStyle(color: Color(0xFF027FE6))),
                               ),
                             ],
                           ),
@@ -367,6 +333,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
               ),
+            
             ],
           ),
         ),

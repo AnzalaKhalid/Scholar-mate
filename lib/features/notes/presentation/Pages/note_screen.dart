@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:scholar_mate/features/notes/data/models/note_model.dart';
 import 'package:scholar_mate/features/notes/domain/services.dart';
 import 'package:scholar_mate/features/notes/presentation/Pages/create_note.dart';
 import 'package:scholar_mate/features/notes/presentation/Pages/noteDetail.dart';
 
 class NotesListPage extends StatefulWidget {
-  final String userId; // Pass the user ID to filter notes
-
-  const NotesListPage({Key? key, required this.userId}) : super(key: key);
+  const NotesListPage({super.key, required String userId});
 
   @override
   _NotesListPageState createState() => _NotesListPageState();
@@ -16,6 +15,7 @@ class NotesListPage extends StatefulWidget {
 class _NotesListPageState extends State<NotesListPage> {
   final NotesService _notesService = NotesService();
   List<Note> _notes = [];
+  final String? userId = FirebaseAuth.instance.currentUser?.uid; // Retrieve the logged-in user ID
 
   @override
   void initState() {
@@ -24,8 +24,10 @@ class _NotesListPageState extends State<NotesListPage> {
   }
 
   Future<void> _retrieveNotes() async {
+    if (userId == null) return; // Exit if no user is logged in
+
     try {
-      List<Note> notes = await _notesService.retrieveNotes(widget.userId);
+      List<Note> notes = await _notesService.retrieveNotes(); // Call without user ID
       setState(() {
         _notes = notes;
       });
@@ -40,7 +42,7 @@ class _NotesListPageState extends State<NotesListPage> {
   void _navigateToCreateNote() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CreateNotePage(userId: widget.userId)),
+      MaterialPageRoute(builder: (context) =>const CreateNotePage(userId: '',)),
     ).then((value) {
       if (value == true) {
         _retrieveNotes(); // Refresh notes list if a note was created
@@ -100,7 +102,7 @@ class _NotesListPageState extends State<NotesListPage> {
       ),
       backgroundColor: const Color.fromARGB(255, 219, 218, 218),
       body: Padding(
-        padding: EdgeInsets.all(16.0), // Standard padding
+        padding: const EdgeInsets.all(16.0), // Standard padding
         child: ListView.builder(
           itemCount: _notes.length,
           itemBuilder: (context, index) {

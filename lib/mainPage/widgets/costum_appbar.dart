@@ -1,6 +1,7 @@
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
+import 'package:scholar_mate/features/setting/pages/settings.dart';
 
 class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
   String? namePage;
@@ -8,6 +9,7 @@ class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 65.5);
+
   @override
   State<MyAppBar> createState() => _MyAppBarState();
 }
@@ -15,105 +17,116 @@ class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _MyAppBarState extends State<MyAppBar> {
   @override
   Widget build(BuildContext context) {
+    double appBarHeight = MediaQuery.of(context).size.height * 0.15;
+
     return PreferredSize(
-      preferredSize: const Size.fromHeight(kToolbarHeight),
+      preferredSize: Size.fromHeight(appBarHeight),
       child: AppBar(
         actions: [
           Container(
-            height: MediaQuery.of(context).size.height * 0.12,
-            width: MediaQuery.of(context).size.width * 1.0,
-            decoration: const BoxDecoration(color:  Color.fromARGB(255, 1, 97, 205),),
+            height: appBarHeight * 0.8, // Adjust height for the action container
+            width: MediaQuery.of(context).size.width,
+            decoration: const BoxDecoration(
+              color: Color.fromARGB(255, 1, 97, 205),
+            ),
             child: Padding(
-              padding: const EdgeInsets.only(left: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                 const Row(
+                  // Left side (Logo)
+                  Row(
                     children: [
-                      // Image.asset('assets/images/uotlogo.png', scale: 8),
-                       Column(
+                      
+                      Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          
-                      Padding(
-                        padding: EdgeInsets.only(left: 20),
-                        child: Image(image: AssetImage("assets/logo3.png"),height: 100,width: 100,),
-                      ),
 
+                        children: [
+
+                          Padding(
+
+                            padding: const EdgeInsets.only(left: 20),
+                            child: Image.asset(
+                              "assets/logo3.png",
+                              height: appBarHeight * 0.8, // Responsive height
+                              width: appBarHeight * 0.8, // Responsive width
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
+                  
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      
                       Container(
-                        height: MediaQuery.of(context).size.height * 0.008,
+                        height: appBarHeight * 0.03, 
                         width: MediaQuery.of(context).size.width * 0.25,
                         color: Colors.white,
-                        
                       ),
-                      const SizedBox(
-                        height: 5,
-                      ),
+                      const SizedBox(height: 3),
+                      
                       Container(
-                        height: MediaQuery.of(context).size.height * 0.035,
+                        height: appBarHeight * 0.2, 
                         width: MediaQuery.of(context).size.width * 0.3,
                         decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                bottomLeft: Radius.circular(10))),
-                        child:const Center(
-                          // child: Text(
-                          //   '${widget.namePage}',
-                          //   style: const TextStyle(
-                          //       fontWeight: FontWeight.bold,
-                          //       fontSize: 20,
-                          //       color: Colors.white),
-                          // ),
-                          child: Icon(
-                            Icons.settings,
-                            color: Colors.blue,
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                        ),
+                        child:  Center(
+                          child: GestureDetector(
+                            onTap: (){
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>const SettingsPage()));
+                            },
+                            child:const Icon(
+                              Icons.menu,
+                              color: Color.fromARGB(255, 1, 97, 205),
                             ),
+                          ),
                         ),
                       ),
-                      const SizedBox(
-                        height: 5,
-                      ),
+                      const SizedBox(height: 3),
+                      
                       Container(
-                        height: MediaQuery.of(context).size.height * 0.007,
+                        height: appBarHeight * 0.03, 
                         width: MediaQuery.of(context).size.width * 0.25,
                         decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                bottomLeft: Radius.circular(10))),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                        ),
                         child: const Text(""),
                       ),
-                      const SizedBox(
-                        height: 2,
-                      ),
+                      const SizedBox(height: 2),
                       Container(
-                        height: MediaQuery.of(context).size.height * 0.005,
+                        height: appBarHeight * 0.02, 
                         width: MediaQuery.of(context).size.width * 0.2,
                         decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                bottomLeft: Radius.circular(10))),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                        ),
                         child: const Text(""),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
           ),
         ],
         backgroundColor: const Color.fromARGB(255, 1, 97, 205),
-        toolbarHeight: MediaQuery.of(context).size.height * 0.15,
+        toolbarHeight: appBarHeight,
       ),
     );
   }

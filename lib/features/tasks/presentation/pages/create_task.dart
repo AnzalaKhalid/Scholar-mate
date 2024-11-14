@@ -12,7 +12,7 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _taskTitleController = TextEditingController();
-  final TaskaddService _taskService = TaskaddService();
+  final TaskAddService _taskService = TaskAddService();
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -65,7 +65,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       );
 
       try {
-        await _taskService.addTask(
+        await _taskService.createTask(
           _taskTitleController.text,
           '', // Empty description as it has been removed
           taskDateTime,
